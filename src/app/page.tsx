@@ -65,19 +65,19 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Navbar */}
-      <nav className="flex items-center justify-between px-6 py-3 bg-gray-900 border-b border-gray-700 shadow-sm">
+      <nav className="flex items-center justify-between px-6 py-3 bg-black border-b border-gray-800 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded" style={{ backgroundColor: "#CBB983" }} />
           <span className="text-lg font-semibold text-white">Logo</span>
         </div>
         <div className="flex items-center gap-1">
-          <button className="px-4 py-2 text-sm font-medium text-gray-300 rounded hover:bg-gray-800">
+          <button className="px-4 py-2 text-sm font-medium text-gray-300 rounded hover:bg-gray-900">
             Home
           </button>
-          <button className="px-4 py-2 text-sm font-medium text-gray-300 rounded hover:bg-gray-800">
+          <button className="px-4 py-2 text-sm font-medium text-gray-300 rounded hover:bg-gray-900">
             Settings
           </button>
-          <button className="px-4 py-2 text-sm font-medium text-red-400 rounded hover:bg-gray-800">
+          <button className="px-4 py-2 text-sm font-medium text-red-400 rounded hover:bg-gray-900">
             Log Out
           </button>
         </div>
