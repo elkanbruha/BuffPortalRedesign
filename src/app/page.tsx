@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
-const HOURS = Array.from({ length: 24 }, (_, i) => {
-  const h = i % 12 || 12;
-  const ampm = i < 12 ? "AM" : "PM";
+const HOURS = Array.from({ length: 15 }, (_, i) => {
+  const hour = i + 6; // 6 AM to 8 PM
+  const h = hour % 12 || 12;
+  const ampm = hour < 12 ? "AM" : "PM";
   return `${h}:00 ${ampm}`;
 });
 
@@ -65,28 +67,28 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Navbar */}
-      <nav className="flex items-center justify-between px-6 py-3 bg-black border-b border-gray-800 shadow-sm">
+      <nav className="flex items-center justify-between px-4 sm:px-6 py-3 bg-black border-b border-gray-800 shadow-sm">
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded" style={{ backgroundColor: "#CBB983" }} />
-          <span className="text-lg font-semibold text-white">Logo</span>
+          <Image src="/buffalo-logo.png" alt="CU Buffs Logo" width={36} height={36} className="h-8 w-8 sm:h-9 sm:w-9 object-contain" />
+          <span className="text-base sm:text-lg font-semibold text-white">CU Buffs Advising</span>
         </div>
-        <div className="flex items-center gap-1">
-          <button className="px-4 py-2 text-sm font-medium text-gray-300 rounded hover:bg-gray-900">
+        <div className="flex items-center gap-0 sm:gap-1">
+          <button className="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 rounded hover:bg-gray-900">
             Home
           </button>
-          <button className="px-4 py-2 text-sm font-medium text-gray-300 rounded hover:bg-gray-900">
+          <button className="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 rounded hover:bg-gray-900">
             Settings
           </button>
-          <button className="px-4 py-2 text-sm font-medium text-red-400 rounded hover:bg-gray-900">
+          <button className="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-red-400 rounded hover:bg-gray-900">
             Log Out
           </button>
         </div>
       </nav>
 
       {/* Content */}
-      <div className="flex flex-1 p-6 gap-6">
-        {/* Left Info Panel */}
-        <aside className="w-72 shrink-0 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col lg:flex-row flex-1 p-4 lg:p-6 gap-4 lg:gap-6">
+        {/* Info Panel */}
+        <aside className="w-full lg:w-72 shrink-0 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Information</h2>
 
           <div className="space-y-4">
@@ -121,8 +123,8 @@ export default function Home() {
         </aside>
 
         {/* Calendar - Week View */}
-        <main className="flex-1 rounded-lg border border-gray-200 bg-white p-5 shadow-sm flex flex-col overflow-hidden">
-          <div className="flex items-center justify-between mb-4">
+        <main className="flex-1 min-w-0 rounded-lg border border-gray-200 bg-white p-3 lg:p-5 shadow-sm flex flex-col overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
             <div className="flex items-center gap-2">
               <button
                 onClick={prevWeek}
@@ -144,25 +146,25 @@ export default function Home() {
                 Next &rarr;
               </button>
             </div>
-            <h2 className="text-xl font-semibold text-gray-800">
+            <h2 className="text-base sm:text-xl font-semibold text-gray-800">
               {formatWeekRange(weekStart)}
             </h2>
           </div>
 
           {/* Day headers */}
-          <div className="grid grid-cols-[60px_repeat(7,1fr)]">
+          <div className="grid grid-cols-[40px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)] overflow-x-auto">
             <div className="border border-gray-200 bg-gray-50" />
             {weekDays.map((date, i) => (
               <div
                 key={i}
-                className="py-2 text-center border border-gray-200"
+                className="py-1 sm:py-2 text-center border border-gray-200"
                 style={{ backgroundColor: isToday(date) ? "rgba(203, 185, 131, 0.15)" : "#f9fafb" }}
               >
-                <div className="text-xs font-semibold uppercase text-gray-500">
-                  {DAYS[date.getDay()]}
+                <div className="text-[10px] sm:text-xs font-semibold uppercase text-gray-500">
+                  {DAYS[date.getDay()].charAt(0)}<span className="hidden sm:inline">{DAYS[date.getDay()].slice(1)}</span>
                 </div>
                 <div
-                  className="text-lg font-semibold"
+                  className="text-sm sm:text-lg font-semibold"
                   style={{ color: isToday(date) ? "#CBB983" : "#1f2937" }}
                 >
                   {date.getDate()}
@@ -173,16 +175,16 @@ export default function Home() {
 
           {/* Time grid */}
           <div className="flex-1 overflow-y-auto">
-            <div className="grid grid-cols-[60px_repeat(7,1fr)]">
+            <div className="grid grid-cols-[40px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)]">
               {HOURS.map((hour, hi) => (
                 <div key={`row-${hi}`} className="contents">
-                  <div className="h-14 border border-gray-200 px-1 py-1 text-right text-xs text-gray-400 bg-gray-50">
+                  <div className="h-12 sm:h-14 border border-gray-200 px-1 py-1 text-right text-[10px] sm:text-xs text-gray-400 bg-gray-50">
                     {hour}
                   </div>
                   {weekDays.map((date, di) => (
                     <div
                       key={`cell-${hi}-${di}`}
-                      className="h-14 border border-gray-200 hover:bg-gray-50 cursor-pointer"
+                      className="h-12 sm:h-14 border border-gray-200 hover:bg-gray-50 cursor-pointer"
                       style={{ backgroundColor: isToday(date) ? "rgba(203, 185, 131, 0.08)" : undefined }}
                     />
                   ))}
