@@ -311,62 +311,68 @@ export default function Home() {
 
             {/* Time grid */}
             <div className="flex-1 overflow-y-auto">
-              <div
-                className="grid"
-                style={{ gridTemplateColumns: `40px repeat(${dayCount}, 1fr)` }}
-              >
-                {HOURS.map((hour, hi) => {
-                  const currentHour = hi + 6;
+              <div className="flex">
+                {/* Time labels column */}
+                <div className="w-[40px] shrink-0">
+                  {HOURS.map((hour, hi) => (
+                    <div key={hi} className="h-12 sm:h-14 border-b border-r border-gray-100 px-1 py-1 text-right text-[10px] sm:text-xs text-gray-400 bg-gray-50/50">
+                      {hour}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Day columns */}
+                {visibleDays.map((date, di) => {
+                  const past = isPast(date);
+                  const daySlots = AVAILABILITY.filter(
+                    (s) => s.day === date.getDay() && s.startHour >= 6 && s.startHour < 20
+                  );
                   return (
-                    <div key={`row-${hi}`} className="contents">
-                      <div className="h-12 sm:h-14 border-b border-r border-gray-100 px-1 py-1 text-right text-[10px] sm:text-xs text-gray-400 bg-gray-50/50">
-                        {hour}
-                      </div>
-                      {visibleDays.map((date, di) => {
-                        const past = isPast(date);
-                        const slots = getSlotsForCell(date.getDay(), currentHour);
-                        const isStart = slots.length > 0 && slots[0].startHour === currentHour;
+                    <div key={di} className="flex-1 relative">
+                      {/* Background hour cells */}
+                      {HOURS.map((_, hi) => (
+                        <div
+                          key={hi}
+                          className={`h-12 sm:h-14 border-b border-r border-gray-100 transition-colors ${
+                            past ? "bg-gray-100/60" : "cursor-pointer hover:bg-gray-50"
+                          }`}
+                          style={{ backgroundColor: !past && isToday(date) ? "rgba(203, 185, 131, 0.06)" : undefined }}
+                        />
+                      ))}
+
+                      {/* Event blocks positioned absolutely */}
+                      {daySlots.map((slot, si) => {
+                        const topHour = slot.startHour - 6;
+                        const spanHours = slot.endHour - slot.startHour;
                         return (
                           <div
-                            key={`cell-${hi}-${di}`}
-                            className={`h-12 sm:h-14 border-b border-r border-gray-100 relative transition-colors ${
-                              past ? "bg-gray-100/60 cursor-default" : "cursor-pointer hover:bg-gray-50"
+                            key={si}
+                            className={`absolute left-0.5 right-0.5 rounded-md flex items-start px-1.5 py-1 ${
+                              past ? "opacity-40 grayscale" : "cursor-pointer"
                             }`}
-                            style={{ backgroundColor: !past && isToday(date) ? "rgba(203, 185, 131, 0.06)" : undefined }}
+                            style={{
+                              top: `calc(${topHour} * (var(--row-h)))`,
+                              height: `calc(${spanHours} * (var(--row-h)))`,
+                              backgroundColor: past
+                                ? "rgba(156, 163, 175, 0.2)"
+                                : slot.type === "in-person"
+                                  ? "rgba(203, 185, 131, 0.25)"
+                                  : "rgba(96, 165, 250, 0.25)",
+                              borderLeft: `3px solid ${
+                                past
+                                  ? "#9ca3af"
+                                  : slot.type === "in-person" ? "#CBB983" : "#60a5fa"
+                              }`,
+                            }}
                           >
-                            {slots.map((slot, si) => (
-                              <div
-                                key={si}
-                                className={`absolute inset-x-0.5 inset-y-0 rounded-md flex items-start px-1 py-0.5 ${
-                                  isStart ? "rounded-t-md" : ""
-                                } ${
-                                  slot.endHour === currentHour + 1 ? "rounded-b-md" : ""
-                                } ${past ? "opacity-40 grayscale" : ""}`}
-                                style={{
-                                  backgroundColor: past
-                                    ? "rgba(156, 163, 175, 0.2)"
-                                    : slot.type === "in-person"
-                                      ? "rgba(203, 185, 131, 0.25)"
-                                      : "rgba(96, 165, 250, 0.25)",
-                                  borderLeft: `3px solid ${
-                                    past
-                                      ? "#9ca3af"
-                                      : slot.type === "in-person" ? "#CBB983" : "#60a5fa"
-                                  }`,
-                                }}
-                              >
-                                {isStart && (
-                                  <div className="overflow-hidden">
-                                    <div className={`text-[9px] sm:text-[11px] font-semibold truncate ${past ? "text-gray-400" : "text-gray-800"}`}>
-                                      {slot.advisor}
-                                    </div>
-                                    <div className={`text-[8px] sm:text-[10px] truncate ${past ? "text-gray-400" : "text-gray-500"}`}>
-                                      {slot.type === "in-person" ? "In-Person" : "Virtual"}
-                                    </div>
-                                  </div>
-                                )}
+                            <div className="overflow-hidden">
+                              <div className={`text-[9px] sm:text-[11px] font-semibold truncate ${past ? "text-gray-400" : "text-gray-800"}`}>
+                                {slot.advisor}
                               </div>
-                            ))}
+                              <div className={`text-[8px] sm:text-[10px] truncate ${past ? "text-gray-400" : "text-gray-500"}`}>
+                                {slot.type === "in-person" ? "In-Person" : "Virtual"} &middot; {formatHour(slot.startHour)} – {formatHour(slot.endHour)}
+                              </div>
+                            </div>
                           </div>
                         );
                       })}
