@@ -18,16 +18,16 @@ const HOURS = Array.from({ length: 15 }, (_, i) => {
 // Mock availability slots keyed by dayOfWeek (0=Sun..6=Sat)
 // startHour/endHour are 24h values, type is "in-person" or "virtual"
 const AVAILABILITY: { day: number; startHour: number; endHour: number; type: "in-person" | "virtual"; advisor: string }[] = [
-  { day: 1, startHour: 9, endHour: 11, type: "in-person", advisor: "Dr. Martinez" },
+  { day: 1, startHour: 9, endHour: 10, type: "in-person", advisor: "Dr. Martinez" },
   { day: 1, startHour: 13, endHour: 15, type: "virtual", advisor: "Dr. Martinez" },
   { day: 2, startHour: 10, endHour: 12, type: "virtual", advisor: "Sarah Kim" },
-  { day: 2, startHour: 14, endHour: 16, type: "in-person", advisor: "Dr. Johnson" },
+  { day: 2, startHour: 14, endHour: 15, type: "in-person", advisor: "Dr. Johnson" },
   { day: 3, startHour: 8, endHour: 10, type: "in-person", advisor: "Dr. Martinez" },
-  { day: 3, startHour: 11, endHour: 13, type: "virtual", advisor: "Sarah Kim" },
+  { day: 3, startHour: 11, endHour: 12, type: "virtual", advisor: "Sarah Kim" },
   { day: 3, startHour: 15, endHour: 17, type: "in-person", advisor: "Dr. Johnson" },
   { day: 4, startHour: 9, endHour: 11, type: "virtual", advisor: "Sarah Kim" },
-  { day: 4, startHour: 13, endHour: 15, type: "in-person", advisor: "Dr. Martinez" },
-  { day: 5, startHour: 10, endHour: 12, type: "in-person", advisor: "Dr. Johnson" },
+  { day: 4, startHour: 13, endHour: 14, type: "in-person", advisor: "Dr. Martinez" },
+  { day: 5, startHour: 10, endHour: 11, type: "in-person", advisor: "Dr. Johnson" },
   { day: 5, startHour: 14, endHour: 16, type: "virtual", advisor: "Dr. Martinez" },
   // Weekend virtual general advising
   { day: 6, startHour: 12, endHour: 17, type: "virtual", advisor: "General Advising" },
