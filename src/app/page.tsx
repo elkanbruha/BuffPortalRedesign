@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -29,6 +29,9 @@ const AVAILABILITY: { day: number; startHour: number; endHour: number; type: "in
   { day: 4, startHour: 13, endHour: 15, type: "in-person", advisor: "Dr. Martinez" },
   { day: 5, startHour: 10, endHour: 12, type: "in-person", advisor: "Dr. Johnson" },
   { day: 5, startHour: 14, endHour: 16, type: "virtual", advisor: "Dr. Martinez" },
+  // Weekend virtual general advising
+  { day: 6, startHour: 12, endHour: 17, type: "virtual", advisor: "General Advising" },
+  { day: 0, startHour: 12, endHour: 17, type: "virtual", advisor: "General Advising" },
 ];
 
 function getStartOfWeek(date: Date) {
@@ -41,9 +44,9 @@ function getStartOfWeek(date: Date) {
   return d;
 }
 
-function formatWeekRange(start: Date) {
+function formatWeekRange(start: Date, days = 7) {
   const end = new Date(start);
-  end.setDate(end.getDate() + 6);
+  end.setDate(end.getDate() + days - 1);
   const startMonth = MONTHS[start.getMonth()];
   const endMonth = MONTHS[end.getMonth()];
   if (start.getMonth() === end.getMonth()) {
@@ -67,23 +70,61 @@ function formatHour(h: number) {
 export default function Home() {
   const today = new Date();
   const [weekStart, setWeekStart] = useState(getStartOfWeek(today));
+  const [mobileStart, setMobileStart] = useState(() => {
+    const d = new Date(today);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const prevWeek = () => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() - 7);
-    setWeekStart(d);
+    if (isMobile) {
+      const d = new Date(mobileStart);
+      d.setDate(d.getDate() - 5);
+      setMobileStart(d);
+    } else {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() - 7);
+      setWeekStart(d);
+    }
   };
 
   const nextWeek = () => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + 7);
-    setWeekStart(d);
+    if (isMobile) {
+      const d = new Date(mobileStart);
+      d.setDate(d.getDate() + 5);
+      setMobileStart(d);
+    } else {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + 7);
+      setWeekStart(d);
+    }
   };
 
   const goToToday = () => {
     setWeekStart(getStartOfWeek(today));
+    const d = new Date(today);
+    d.setHours(0, 0, 0, 0);
+    setMobileStart(d);
   };
 
+  const displayStart = isMobile ? mobileStart : weekStart;
+  const dayCount = isMobile ? 5 : 7;
+
+  const visibleDays = Array.from({ length: dayCount }, (_, i) => {
+    const d = new Date(displayStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+
+  // Full week for upcoming slots calculation
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart);
     d.setDate(d.getDate() + i);
@@ -94,6 +135,14 @@ export default function Home() {
     date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear();
+
+  const isPast = (date: Date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const t = new Date(today);
+    t.setHours(0, 0, 0, 0);
+    return d < t;
+  };
 
   // Upcoming slots for the side panel (next 5 from today onward)
   const upcomingSlots = weekDays
@@ -226,37 +275,46 @@ export default function Home() {
               </button>
             </div>
             <h2 className="text-base sm:text-xl font-semibold text-gray-800">
-              {formatWeekRange(weekStart)}
+              {formatWeekRange(displayStart, dayCount)}
             </h2>
           </div>
 
           {/* Day headers + Time grid wrapped in rounded container */}
           <div className="flex-1 flex flex-col overflow-hidden rounded-xl border border-gray-200">
             {/* Day headers */}
-            <div className="grid grid-cols-[40px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)]">
+            <div
+              className="grid"
+              style={{ gridTemplateColumns: `40px repeat(${dayCount}, 1fr)` }}
+            >
               <div className="border-b border-r border-gray-200 bg-gray-50 rounded-tl-xl" />
-              {weekDays.map((date, i) => (
-                <div
-                  key={i}
-                  className={`py-2 sm:py-3 text-center border-b border-r border-gray-200 ${i === 6 ? "rounded-tr-xl" : ""}`}
-                  style={{ backgroundColor: isToday(date) ? "rgba(203, 185, 131, 0.15)" : "#f9fafb" }}
-                >
-                  <div className="text-[10px] sm:text-xs font-semibold uppercase text-gray-400 tracking-wide">
-                    {DAYS[i].charAt(0)}<span className="hidden sm:inline">{DAYS[i].slice(1)}</span>
-                  </div>
+              {visibleDays.map((date, i) => {
+                const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getDay()];
+                return (
                   <div
-                    className="text-sm sm:text-lg font-semibold mt-0.5"
-                    style={{ color: isToday(date) ? "#CBB983" : "#1f2937" }}
+                    key={i}
+                    className={`py-2 sm:py-3 text-center border-b border-r border-gray-200 ${i === dayCount - 1 ? "rounded-tr-xl" : ""} ${isPast(date) ? "opacity-50" : ""}`}
+                    style={{ backgroundColor: isToday(date) ? "rgba(203, 185, 131, 0.15)" : "#f9fafb" }}
                   >
-                    {date.getDate()}
+                    <div className="text-[10px] sm:text-xs font-semibold uppercase text-gray-400 tracking-wide">
+                      {dayName.charAt(0)}<span className="hidden sm:inline">{dayName.slice(1)}</span>
+                    </div>
+                    <div
+                      className="text-sm sm:text-lg font-semibold mt-0.5"
+                      style={{ color: isToday(date) ? "#CBB983" : isPast(date) ? "#9ca3af" : "#1f2937" }}
+                    >
+                      {date.getDate()}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Time grid */}
             <div className="flex-1 overflow-y-auto">
-              <div className="grid grid-cols-[40px_repeat(7,1fr)] sm:grid-cols-[60px_repeat(7,1fr)]">
+              <div
+                className="grid"
+                style={{ gridTemplateColumns: `40px repeat(${dayCount}, 1fr)` }}
+              >
                 {HOURS.map((hour, hi) => {
                   const currentHour = hi + 6;
                   return (
@@ -264,14 +322,17 @@ export default function Home() {
                       <div className="h-12 sm:h-14 border-b border-r border-gray-100 px-1 py-1 text-right text-[10px] sm:text-xs text-gray-400 bg-gray-50/50">
                         {hour}
                       </div>
-                      {weekDays.map((date, di) => {
+                      {visibleDays.map((date, di) => {
+                        const past = isPast(date);
                         const slots = getSlotsForCell(date.getDay(), currentHour);
                         const isStart = slots.length > 0 && slots[0].startHour === currentHour;
                         return (
                           <div
                             key={`cell-${hi}-${di}`}
-                            className="h-12 sm:h-14 border-b border-r border-gray-100 relative cursor-pointer transition-colors hover:bg-gray-50"
-                            style={{ backgroundColor: isToday(date) ? "rgba(203, 185, 131, 0.06)" : undefined }}
+                            className={`h-12 sm:h-14 border-b border-r border-gray-100 relative transition-colors ${
+                              past ? "bg-gray-100/60 cursor-default" : "cursor-pointer hover:bg-gray-50"
+                            }`}
+                            style={{ backgroundColor: !past && isToday(date) ? "rgba(203, 185, 131, 0.06)" : undefined }}
                           >
                             {slots.map((slot, si) => (
                               <div
@@ -280,23 +341,26 @@ export default function Home() {
                                   isStart ? "rounded-t-md" : ""
                                 } ${
                                   slot.endHour === currentHour + 1 ? "rounded-b-md" : ""
-                                }`}
+                                } ${past ? "opacity-40 grayscale" : ""}`}
                                 style={{
-                                  backgroundColor:
-                                    slot.type === "in-person"
+                                  backgroundColor: past
+                                    ? "rgba(156, 163, 175, 0.2)"
+                                    : slot.type === "in-person"
                                       ? "rgba(203, 185, 131, 0.25)"
                                       : "rgba(96, 165, 250, 0.25)",
                                   borderLeft: `3px solid ${
-                                    slot.type === "in-person" ? "#CBB983" : "#60a5fa"
+                                    past
+                                      ? "#9ca3af"
+                                      : slot.type === "in-person" ? "#CBB983" : "#60a5fa"
                                   }`,
                                 }}
                               >
                                 {isStart && (
                                   <div className="overflow-hidden">
-                                    <div className="text-[9px] sm:text-[11px] font-semibold text-gray-800 truncate">
+                                    <div className={`text-[9px] sm:text-[11px] font-semibold truncate ${past ? "text-gray-400" : "text-gray-800"}`}>
                                       {slot.advisor}
                                     </div>
-                                    <div className="text-[8px] sm:text-[10px] text-gray-500 truncate">
+                                    <div className={`text-[8px] sm:text-[10px] truncate ${past ? "text-gray-400" : "text-gray-500"}`}>
                                       {slot.type === "in-person" ? "In-Person" : "Virtual"}
                                     </div>
                                   </div>
