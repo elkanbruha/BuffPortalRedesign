@@ -1,388 +1,541 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
+import Link from "next/link";
+import { useMemo } from "react";
+import { Avatar } from "@/components/Avatar";
+import {
+  IconAlert,
+  IconArrowRight,
+  IconBook,
+  IconCalendar,
+  IconChat,
+  IconCheckCircle,
+  IconClock,
+  IconGraduation,
+  IconLightbulb,
+  IconSparkle,
+  IconTarget,
+  IconUsers,
+} from "@/components/icons";
+import {
+  DAYS_LONG,
+  MONTHS,
+  MONTHS_SHORT,
+  formatHour,
+  parseLocalIsoDate,
+  relativeDay,
+} from "@/lib/dateUtils";
+import {
+  RECOMMENDATIONS,
+  REQUIREMENTS,
+  advisorById,
+  overallProgress,
+} from "@/lib/mockData";
+import { useAppStore } from "@/lib/store";
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const HOURS = Array.from({ length: 15 }, (_, i) => {
-  const hour = i + 6; // 6 AM to 8 PM
-  const h = hour % 12 || 12;
-  const ampm = hour < 12 ? "AM" : "PM";
-  return `${h}:00 ${ampm}`;
-});
-
-// Mock availability slots keyed by dayOfWeek (0=Sun..6=Sat)
-// startHour/endHour are 24h values, type is "in-person" or "virtual"
-const AVAILABILITY: { day: number; startHour: number; endHour: number; type: "in-person" | "virtual"; advisor: string }[] = [
-  { day: 1, startHour: 9, endHour: 10, type: "in-person", advisor: "Dr. Martinez" },
-  { day: 1, startHour: 13, endHour: 15, type: "virtual", advisor: "Dr. Martinez" },
-  { day: 2, startHour: 10, endHour: 12, type: "virtual", advisor: "Sarah Kim" },
-  { day: 2, startHour: 14, endHour: 15, type: "in-person", advisor: "Dr. Johnson" },
-  { day: 3, startHour: 8, endHour: 10, type: "in-person", advisor: "Dr. Martinez" },
-  { day: 3, startHour: 11, endHour: 12, type: "virtual", advisor: "Sarah Kim" },
-  { day: 3, startHour: 15, endHour: 17, type: "in-person", advisor: "Dr. Johnson" },
-  { day: 4, startHour: 9, endHour: 11, type: "virtual", advisor: "Sarah Kim" },
-  { day: 4, startHour: 13, endHour: 14, type: "in-person", advisor: "Dr. Martinez" },
-  { day: 5, startHour: 10, endHour: 11, type: "in-person", advisor: "Dr. Johnson" },
-  { day: 5, startHour: 14, endHour: 16, type: "virtual", advisor: "Dr. Martinez" },
-  // Weekend virtual general advising
-  { day: 6, startHour: 12, endHour: 17, type: "virtual", advisor: "General Advising" },
-  { day: 0, startHour: 12, endHour: 17, type: "virtual", advisor: "General Advising" },
-];
-
-function getStartOfWeek(date: Date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  // Shift so Monday=0: if Sunday (0), go back 6; otherwise go back (day-1)
-  const diff = day === 0 ? 6 : day - 1;
-  d.setDate(d.getDate() - diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
+function greetingFor(hour: number) {
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
 }
 
-function formatWeekRange(start: Date, days = 7) {
-  const end = new Date(start);
-  end.setDate(end.getDate() + days - 1);
-  const startMonth = MONTHS[start.getMonth()];
-  const endMonth = MONTHS[end.getMonth()];
-  if (start.getMonth() === end.getMonth()) {
-    return `${startMonth} ${start.getDate()} – ${end.getDate()}, ${start.getFullYear()}`;
-  }
-  return `${startMonth} ${start.getDate()} – ${endMonth} ${end.getDate()}, ${end.getFullYear()}`;
-}
+type QuickAction = {
+  href: string;
+  label: string;
+  desc: string;
+  Icon: typeof IconCalendar;
+  accent: string;
+};
 
-function getSlotsForCell(dayOfWeek: number, hour: number) {
-  return AVAILABILITY.filter(
-    (s) => s.day === dayOfWeek && hour >= s.startHour && hour < s.endHour
+const QUICK_ACTIONS: QuickAction[] = [
+  {
+    href: "/schedule",
+    label: "Book an appointment",
+    desc: "Click a slot, confirm, done.",
+    Icon: IconCalendar,
+    accent: "#CBB983",
+  },
+  {
+    href: "/degree",
+    label: "Plan next semester",
+    desc: "See your recommended courses.",
+    Icon: IconSparkle,
+    accent: "#a78bfa",
+  },
+  {
+    href: "/messages",
+    label: "Message your advisor",
+    desc: "Threaded conversations.",
+    Icon: IconChat,
+    accent: "#60a5fa",
+  },
+  {
+    href: "/resources",
+    label: "Browse resources",
+    desc: "Tutoring, writing, wellness.",
+    Icon: IconBook,
+    accent: "#4ade80",
+  },
+];
+
+export default function DashboardPage() {
+  const {
+    student,
+    advisorId,
+    nextAppointment,
+    notifications,
+    setNotificationDrawerOpen,
+    unreadCount,
+  } = useAppStore();
+  const advisor = advisorById(advisorId);
+  const progress = overallProgress();
+
+  const now = useMemo(() => new Date(), []);
+  const firstName = student.name.split(" ")[0];
+  const greet = greetingFor(now.getHours());
+
+  const upcomingNotifs = notifications
+    .filter((n) => !n.read)
+    .slice(0, 3);
+
+  const topRec = RECOMMENDATIONS[0];
+
+  const nextApptDate = nextAppointment
+    ? parseLocalIsoDate(nextAppointment.date)
+    : null;
+
+  const remainingCredits = Math.max(
+    student.totalCreditsRequired -
+      student.totalCreditsCompleted -
+      student.totalCreditsInProgress,
+    0,
+  );
+
+  return (
+    <div className="flex-1 flex flex-col">
+      {/* Alert banner */}
+      <div
+        className="px-4 sm:px-6 py-2.5 text-sm flex items-center gap-2 border-b border-gray-200"
+        style={{ backgroundColor: "var(--color-gold-soft)", color: "#4b3f14" }}
+      >
+        <IconAlert size={16} />
+        <span className="flex-1">
+          <strong className="font-semibold">Fall 2026 registration opens April 30.</strong>{" "}
+          Meet with your advisor first — slots fill quickly.
+        </span>
+        <Link
+          href="/schedule"
+          className="hidden sm:inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full hover:bg-white/40"
+          style={{ color: "#8a7a44" }}
+        >
+          Find a time <IconArrowRight size={14} />
+        </Link>
+      </div>
+
+      <div className="flex-1 px-4 sm:px-6 py-5 sm:py-8 max-w-[1400px] mx-auto w-full">
+        {/* Hero row: greeting + next appointment */}
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 sm:mb-8">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              {DAYS_LONG[now.getDay()]}, {MONTHS[now.getMonth()]} {now.getDate()}
+            </p>
+            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 mt-1">
+              {greet}, {firstName}.
+            </h1>
+            <p className="text-sm text-gray-600 mt-1 max-w-xl">
+              {nextAppointment
+                ? `You're ${progress}% through your degree and have an advisor meeting ${relativeDay(nextApptDate!).toLowerCase()}.`
+                : `You're ${progress}% through your degree. Registration opens soon — worth a quick check-in.`}
+            </p>
+          </div>
+          <Link
+            href="/schedule"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-black shadow-sm hover:shadow-md transition-shadow"
+            style={{ backgroundColor: "#CBB983" }}
+          >
+            <IconCalendar size={18} />
+            {nextAppointment ? "Manage appointments" : "Book an appointment"}
+          </Link>
+        </header>
+
+        {/* Main grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+          {/* LEFT: anchoring priorities, since survey says 58.3% look left first */}
+          <div className="lg:col-span-2 space-y-4 lg:space-y-6">
+            {/* Next appointment */}
+            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <IconCalendar size={16} className="text-gray-400" />
+                  Next appointment
+                </h2>
+                <Link href="/schedule" className="text-xs font-semibold text-gray-500 hover:text-gray-800">
+                  All appointments →
+                </Link>
+              </div>
+              {nextAppointment && advisor && nextApptDate ? (
+                <div className="flex items-center gap-4">
+                  <Avatar name={advisor.name} accent={advisor.accent} size={56} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-lg font-semibold text-gray-900 truncate">
+                      {advisor.name}
+                    </div>
+                    <p className="text-xs text-gray-500">{advisor.title}</p>
+                    <div className="mt-1.5 text-sm text-gray-700 flex items-center flex-wrap gap-x-3 gap-y-0.5">
+                      <span className="inline-flex items-center gap-1">
+                        <IconClock size={14} className="text-gray-400" />
+                        {relativeDay(nextApptDate)} · {formatHour(nextAppointment.startHour)}–
+                        {formatHour(nextAppointment.endHour)}
+                      </span>
+                      <span
+                        className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                          nextAppointment.type === "in-person"
+                            ? "text-yellow-800 bg-yellow-100"
+                            : "text-blue-800 bg-blue-100"
+                        }`}
+                      >
+                        {nextAppointment.type === "in-person" ? "In-person" : "Virtual"}
+                      </span>
+                    </div>
+                    {nextAppointment.topic && (
+                      <p className="text-xs text-gray-500 mt-1.5 italic">
+                        “{nextAppointment.topic}”
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-gray-200 p-5 text-center">
+                  <p className="text-sm text-gray-600">
+                    No appointment booked — and registration is coming up.
+                  </p>
+                  <Link
+                    href="/schedule"
+                    className="mt-3 inline-flex items-center gap-1 text-sm font-semibold"
+                    style={{ color: "#8a7a44" }}
+                  >
+                    Find a time <IconArrowRight size={14} />
+                  </Link>
+                </div>
+              )}
+            </section>
+
+            {/* Degree progress preview */}
+            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <IconGraduation size={16} className="text-gray-400" />
+                  Degree progress
+                </h2>
+                <Link href="/degree" className="text-xs font-semibold text-gray-500 hover:text-gray-800">
+                  Full tracker →
+                </Link>
+              </div>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                <ProgressDial percent={progress} />
+                <div className="flex-1 min-w-0 w-full">
+                  <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">
+                    {student.major} · {student.year}
+                  </div>
+                  <div className="space-y-2">
+                    {REQUIREMENTS.map((r) => {
+                      const pct = Math.min(
+                        100,
+                        Math.round(
+                          ((r.creditsCompleted + r.creditsInProgress) /
+                            r.creditsRequired) *
+                            100,
+                        ),
+                      );
+                      return (
+                        <div key={r.id}>
+                          <div className="flex justify-between text-[11px] text-gray-600 mb-0.5">
+                            <span>{r.label}</span>
+                            <span className="font-medium">
+                              {r.creditsCompleted + r.creditsInProgress}/
+                              {r.creditsRequired}
+                            </span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${pct}%`,
+                                backgroundColor: "#CBB983",
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-gray-500">
+                    <span>
+                      {remainingCredits} credits to go · Grad {student.expectedGradTerm}
+                    </span>
+                    <span>GPA {student.gpa.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Recommendation teaser */}
+            {topRec && (
+              <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <IconSparkle size={16} className="text-gray-400" />
+                    Recommended for next semester
+                  </h2>
+                  <Link href="/degree" className="text-xs font-semibold text-gray-500 hover:text-gray-800">
+                    See all {RECOMMENDATIONS.length} →
+                  </Link>
+                </div>
+                <div className="rounded-xl border border-gray-100 p-4 flex items-start gap-3">
+                  <div
+                    className="shrink-0 h-11 w-11 rounded-xl flex items-center justify-center text-sm font-bold"
+                    style={{
+                      backgroundColor: "var(--color-gold-soft)",
+                      color: "#8a7a44",
+                    }}
+                  >
+                    {topRec.course.code.split(" ")[1]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        {topRec.course.code} · {topRec.course.title}
+                      </h3>
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        Strong fit
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">{topRec.reasonText}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {topRec.reasonTags.map((t) => (
+                        <span
+                          key={t}
+                          className="text-[10px] font-medium px-2 py-0.5 rounded-full text-gray-600 bg-gray-100"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Quick actions */}
+            <section>
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2 px-1">
+                Quick actions
+              </h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {QUICK_ACTIONS.map((q) => (
+                  <Link
+                    key={q.href}
+                    href={q.href}
+                    className="group flex flex-col gap-2 p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 hover:shadow-md transition-all"
+                  >
+                    <span
+                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl"
+                      style={{
+                        backgroundColor: `${q.accent}20`,
+                        color: q.accent,
+                      }}
+                    >
+                      <q.Icon size={18} />
+                    </span>
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {q.label}
+                      </div>
+                      <div className="text-[11px] text-gray-500 mt-0.5">{q.desc}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* RIGHT: advisor + notifications */}
+          <div className="space-y-4 lg:space-y-6">
+            {advisor && (
+              <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <IconUsers size={16} className="text-gray-400" />
+                    Your advisor
+                  </h2>
+                  <Link
+                    href="/advisors"
+                    className="text-xs font-semibold text-gray-500 hover:text-gray-800"
+                  >
+                    Change →
+                  </Link>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Avatar name={advisor.name} accent={advisor.accent} size={48} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-gray-900">
+                      {advisor.name}
+                    </div>
+                    <p className="text-[11px] text-gray-500">{advisor.title}</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5 truncate">
+                      {advisor.officeLocation}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <Link
+                    href="/messages"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-gray-700 bg-gray-50 hover:bg-gray-100"
+                  >
+                    <IconChat size={14} />
+                    Message
+                  </Link>
+                  <Link
+                    href={`/advisors/${advisor.id}`}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-black"
+                    style={{ backgroundColor: "var(--color-gold-tint)" }}
+                  >
+                    Profile
+                    <IconArrowRight size={14} />
+                  </Link>
+                </div>
+                <p className="mt-3 text-[11px] text-gray-500 leading-relaxed">
+                  <strong className="text-gray-700 font-medium">Specialties:</strong>{" "}
+                  {advisor.specialties.join(" · ")}
+                </p>
+              </section>
+            )}
+
+            {/* Reminders */}
+            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <IconLightbulb size={16} className="text-gray-400" />
+                  Reminders
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setNotificationDrawerOpen(true)}
+                  className="text-xs font-semibold text-gray-500 hover:text-gray-800"
+                >
+                  See all{unreadCount > 0 ? ` (${unreadCount})` : ""} →
+                </button>
+              </div>
+              {upcomingNotifs.length === 0 ? (
+                <p className="text-xs text-gray-500 flex items-center gap-1.5">
+                  <IconCheckCircle size={14} className="text-green-600" />
+                  You&apos;re all caught up.
+                </p>
+              ) : (
+                <ul className="space-y-2">
+                  {upcomingNotifs.map((n) => (
+                    <li
+                      key={n.id}
+                      className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2.5"
+                    >
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-sm font-semibold text-gray-800 leading-tight">
+                          {n.title}
+                        </span>
+                        {n.date && (() => {
+                          const d = parseLocalIsoDate(n.date);
+                          return (
+                            <span className="text-[10px] text-gray-400 shrink-0">
+                              {MONTHS_SHORT[d.getMonth()]} {d.getDate()}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <p className="text-[11px] text-gray-600 mt-0.5 leading-snug">
+                        {n.body}
+                      </p>
+                      {n.actionHref && n.actionLabel && (
+                        <Link
+                          href={n.actionHref}
+                          className="mt-1.5 inline-block text-[11px] font-semibold"
+                          style={{ color: "#8a7a44" }}
+                        >
+                          {n.actionLabel} →
+                        </Link>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            {/* Next steps prompt */}
+            <section
+              className="rounded-2xl p-5 shadow-md border"
+              style={{
+                borderColor: "rgba(203, 185, 131, 0.4)",
+                background:
+                  "linear-gradient(135deg, rgba(203,185,131,0.22), rgba(203,185,131,0.05))",
+              }}
+            >
+              <div className="flex items-start gap-2">
+                <IconTarget size={18} style={{ color: "#8a7a44" }} className="shrink-0" />
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Suggested next step
+                  </h3>
+                  <p className="text-xs text-gray-700 mt-1 leading-relaxed">
+                    Based on where you are in your degree, meet with your advisor before April 30 to confirm your Fall 2026 plan. It takes most students a single 30-minute meeting.
+                  </p>
+                  <Link
+                    href="/schedule"
+                    className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold"
+                    style={{ color: "#8a7a44" }}
+                  >
+                    Find a time <IconArrowRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
-function formatHour(h: number) {
-  const hr = h % 12 || 12;
-  const ampm = h < 12 ? "AM" : "PM";
-  return `${hr} ${ampm}`;
-}
-
-export default function Home() {
-  const today = new Date();
-  const [weekStart, setWeekStart] = useState(getStartOfWeek(today));
-  const [mobileStart, setMobileStart] = useState(() => {
-    const d = new Date(today);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  });
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  const prevWeek = () => {
-    if (isMobile) {
-      const d = new Date(mobileStart);
-      d.setDate(d.getDate() - 5);
-      setMobileStart(d);
-    } else {
-      const d = new Date(weekStart);
-      d.setDate(d.getDate() - 7);
-      setWeekStart(d);
-    }
-  };
-
-  const nextWeek = () => {
-    if (isMobile) {
-      const d = new Date(mobileStart);
-      d.setDate(d.getDate() + 5);
-      setMobileStart(d);
-    } else {
-      const d = new Date(weekStart);
-      d.setDate(d.getDate() + 7);
-      setWeekStart(d);
-    }
-  };
-
-  const goToToday = () => {
-    setWeekStart(getStartOfWeek(today));
-    const d = new Date(today);
-    d.setHours(0, 0, 0, 0);
-    setMobileStart(d);
-  };
-
-  const displayStart = isMobile ? mobileStart : weekStart;
-  const dayCount = isMobile ? 5 : 7;
-
-  const visibleDays = Array.from({ length: dayCount }, (_, i) => {
-    const d = new Date(displayStart);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-
-  // Full week for upcoming slots calculation
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-
-  const isToday = (date: Date) =>
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear();
-
-  const isPast = (date: Date) => {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    const t = new Date(today);
-    t.setHours(0, 0, 0, 0);
-    return d < t;
-  };
-
-  // Upcoming slots for the side panel (next 5 from today onward)
-  const upcomingSlots = weekDays
-    .flatMap((date, di) =>
-      AVAILABILITY.filter((s) => s.day === date.getDay()).map((s) => ({
-        ...s,
-        date,
-        dayIndex: di,
-      }))
-    )
-    .filter((s) => {
-      const slotDate = new Date(s.date);
-      slotDate.setHours(s.startHour);
-      return slotDate >= today;
-    })
-    .slice(0, 5);
-
+function ProgressDial({ percent }: { percent: number }) {
+  const clamped = Math.max(0, Math.min(100, percent));
+  const radius = 42;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference * (1 - clamped / 100);
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Navbar */}
-      <nav className="flex items-center justify-between px-4 sm:px-6 py-3 bg-black border-b border-gray-800 shadow-sm">
-        <div className="flex items-center gap-2">
-          <Image src="/buffalo-logo.png" alt="CU Buffs Logo" width={36} height={36} className="h-8 w-8 sm:h-9 sm:w-9 object-contain" />
-          <span className="text-base sm:text-lg font-semibold text-white">CU Buffs Advising</span>
-        </div>
-        <div className="flex items-center gap-0 sm:gap-1">
-          <button className="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 rounded hover:bg-gray-900">
-            Home
-          </button>
-          <button className="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-300 rounded hover:bg-gray-900">
-            Settings
-          </button>
-          <button className="px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-red-400 rounded hover:bg-gray-900">
-            Log Out
-          </button>
-        </div>
-      </nav>
-
-      {/* Content */}
-      <div className="flex flex-col lg:flex-row flex-1 p-4 lg:p-6 gap-4 lg:gap-6">
-        {/* Info Panel */}
-        <aside className="w-full lg:w-72 shrink-0 rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Schedule an Appointment</h2>
-
-          <p className="text-sm text-gray-500 mb-5">
-            Click on any available slot in the calendar to book a session with an advisor.
-          </p>
-
-          <div className="space-y-4">
-            {/* Legend */}
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Availability Key</h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full" style={{ backgroundColor: "rgba(203, 185, 131, 0.7)" }} />
-                  <span className="text-sm text-gray-600">In-Person</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-blue-400" />
-                  <span className="text-sm text-gray-600">Virtual</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Upcoming availability */}
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Upcoming Availability</h3>
-              {upcomingSlots.length > 0 ? (
-                <div className="space-y-2">
-                  {upcomingSlots.map((slot, i) => (
-                    <button
-                      key={i}
-                      className="w-full text-left rounded-lg border border-gray-200 bg-white p-3 hover:shadow-sm transition-shadow cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-gray-800">{slot.advisor}</span>
-                        <span
-                          className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                            slot.type === "in-person"
-                              ? "text-yellow-800 bg-yellow-100"
-                              : "text-blue-800 bg-blue-100"
-                          }`}
-                        >
-                          {slot.type === "in-person" ? "In-Person" : "Virtual"}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][slot.date.getDay()]}, {MONTHS[slot.date.getMonth()]} {slot.date.getDate()} &middot; {formatHour(slot.startHour)} – {formatHour(slot.endHour)}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400">No upcoming slots this week</p>
-              )}
-            </div>
-
-            {/* CTA */}
-            <button
-              className="w-full py-2.5 rounded-xl text-sm font-semibold text-black transition-colors hover:opacity-90"
-              style={{ backgroundColor: "#CBB983" }}
-            >
-              Schedule Now
-            </button>
-          </div>
-        </aside>
-
-        {/* Calendar - Week View */}
-        <main className="flex-1 min-w-0 rounded-2xl border border-gray-200 bg-white p-3 lg:p-5 shadow-md flex flex-col overflow-hidden">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 gap-2">
-            <div className="flex items-center gap-1">
-              <button
-                onClick={prevWeek}
-                className="px-3 py-1.5 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                &larr; Prev
-              </button>
-              <button
-                onClick={goToToday}
-                className="px-3 py-1.5 text-sm font-medium rounded-lg transition-colors"
-                style={{ color: "#CBB983", backgroundColor: "rgba(203, 185, 131, 0.1)" }}
-              >
-                Today
-              </button>
-              <button
-                onClick={nextWeek}
-                className="px-3 py-1.5 text-sm font-medium text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                Next &rarr;
-              </button>
-            </div>
-            <h2 className="text-base sm:text-xl font-semibold text-gray-800">
-              {formatWeekRange(displayStart, dayCount)}
-            </h2>
-          </div>
-
-          {/* Day headers + Time grid wrapped in rounded container */}
-          <div className="flex-1 flex flex-col overflow-hidden rounded-xl border border-gray-200">
-            {/* Day headers */}
-            <div
-              className="grid"
-              style={{ gridTemplateColumns: `40px repeat(${dayCount}, 1fr)` }}
-            >
-              <div className="border-b border-r border-gray-200 bg-gray-50 rounded-tl-xl" />
-              {visibleDays.map((date, i) => {
-                const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][date.getDay()];
-                return (
-                  <div
-                    key={i}
-                    className={`py-2 sm:py-3 text-center border-b border-r border-gray-200 ${i === dayCount - 1 ? "rounded-tr-xl" : ""} ${isPast(date) ? "opacity-50" : ""}`}
-                    style={{ backgroundColor: isToday(date) ? "rgba(203, 185, 131, 0.15)" : "#f9fafb" }}
-                  >
-                    <div className="text-[10px] sm:text-xs font-semibold uppercase text-gray-400 tracking-wide">
-                      {dayName.charAt(0)}<span className="hidden sm:inline">{dayName.slice(1)}</span>
-                    </div>
-                    <div
-                      className="text-sm sm:text-lg font-semibold mt-0.5"
-                      style={{ color: isToday(date) ? "#CBB983" : isPast(date) ? "#9ca3af" : "#1f2937" }}
-                    >
-                      {date.getDate()}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Time grid */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="flex">
-                {/* Time labels column */}
-                <div className="w-[40px] shrink-0">
-                  {HOURS.map((hour, hi) => (
-                    <div key={hi} className="h-12 sm:h-14 border-b border-r border-gray-100 px-1 py-1 text-right text-[10px] sm:text-xs text-gray-400 bg-gray-50/50">
-                      {hour}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Day columns */}
-                {visibleDays.map((date, di) => {
-                  const past = isPast(date);
-                  const daySlots = AVAILABILITY.filter(
-                    (s) => s.day === date.getDay() && s.startHour >= 6 && s.startHour < 20
-                  );
-                  return (
-                    <div key={di} className="flex-1 relative">
-                      {/* Background hour cells */}
-                      {HOURS.map((_, hi) => (
-                        <div
-                          key={hi}
-                          className={`h-12 sm:h-14 border-b border-r border-gray-100 transition-colors ${
-                            past ? "bg-gray-100/60" : "cursor-pointer hover:bg-gray-50"
-                          }`}
-                          style={{ backgroundColor: !past && isToday(date) ? "rgba(203, 185, 131, 0.06)" : undefined }}
-                        />
-                      ))}
-
-                      {/* Event blocks positioned absolutely */}
-                      {daySlots.map((slot, si) => {
-                        const topHour = slot.startHour - 6;
-                        const spanHours = slot.endHour - slot.startHour;
-                        return (
-                          <div
-                            key={si}
-                            className={`absolute left-0.5 right-0.5 rounded-md flex items-start px-1.5 py-1 ${
-                              past ? "opacity-40 grayscale" : "cursor-pointer"
-                            }`}
-                            style={{
-                              top: `calc(${topHour} * (var(--row-h)))`,
-                              height: `calc(${spanHours} * (var(--row-h)))`,
-                              backgroundColor: past
-                                ? "rgba(156, 163, 175, 0.2)"
-                                : slot.type === "in-person"
-                                  ? "rgba(203, 185, 131, 0.25)"
-                                  : "rgba(96, 165, 250, 0.25)",
-                              borderLeft: `3px solid ${
-                                past
-                                  ? "#9ca3af"
-                                  : slot.type === "in-person" ? "#CBB983" : "#60a5fa"
-                              }`,
-                            }}
-                          >
-                            <div className="overflow-hidden">
-                              <div className={`text-[9px] sm:text-[11px] font-semibold truncate ${past ? "text-gray-400" : "text-gray-800"}`}>
-                                {slot.advisor}
-                              </div>
-                              <div className={`text-[8px] sm:text-[10px] truncate ${past ? "text-gray-400" : "text-gray-500"}`}>
-                                {slot.type === "in-person" ? "In-Person" : "Virtual"} &middot; {formatHour(slot.startHour)} – {formatHour(slot.endHour)}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </main>
+    <div className="relative shrink-0" style={{ width: 112, height: 112 }}>
+      <svg width={112} height={112} viewBox="0 0 112 112">
+        <circle
+          cx={56}
+          cy={56}
+          r={radius}
+          stroke="#f3f4f6"
+          strokeWidth={10}
+          fill="none"
+        />
+        <circle
+          cx={56}
+          cy={56}
+          r={radius}
+          stroke="#CBB983"
+          strokeWidth={10}
+          strokeLinecap="round"
+          fill="none"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          transform="rotate(-90 56 56)"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-semibold text-gray-900">{clamped}%</span>
+        <span className="text-[10px] text-gray-500 font-medium">complete</span>
       </div>
     </div>
   );
