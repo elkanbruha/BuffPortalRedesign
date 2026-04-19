@@ -46,7 +46,7 @@ export default function AdvisorProfilePage({
       </Link>
 
       {/* Hero */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-md mb-5 sm:mb-6">
+      <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-md mb-5 sm:mb-6 animate-fade-in-up">
         <div className="flex flex-col sm:flex-row sm:items-start gap-5">
           <Avatar name={advisor.name} accent={advisor.accent} size={96} />
           <div className="flex-1 min-w-0">
@@ -97,7 +97,7 @@ export default function AdvisorProfilePage({
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <Link
                 href="/schedule"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-black shadow-sm hover:shadow-md transition-shadow"
+                className="btn-press inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-black shadow-sm hover:shadow-md transition-shadow"
                 style={{ backgroundColor: "#CBB983" }}
               >
                 <IconCalendar size={16} />
@@ -133,7 +133,7 @@ export default function AdvisorProfilePage({
 
       {/* About + specialties + calendar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-1 space-y-5">
+        <div className="lg:col-span-1 space-y-5 stagger-children">
           <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-2">
               About
@@ -185,7 +185,7 @@ export default function AdvisorProfilePage({
           )}
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 animate-fade-in-up" style={{ animationDelay: "120ms" }}>
           <section className="mb-3">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-2">
               {advisor.name.split(" ")[0]}&apos;s availability

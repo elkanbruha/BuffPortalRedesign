@@ -82,9 +82,11 @@ function FaqItem({ q, a }: { q: string; a: string }) {
           className={`text-gray-400 transition-transform shrink-0 ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open && (
-        <div className="pb-4 text-sm text-gray-600 leading-relaxed">{a}</div>
-      )}
+      <div className="collapse-grid" data-open={open}>
+        <div className="collapse-inner">
+          <div className="pb-4 text-sm text-gray-600 leading-relaxed">{a}</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -109,7 +111,7 @@ export default function ResourcesPage() {
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-5 sm:py-8 max-w-[1400px] mx-auto w-full">
-      <header className="mb-5 sm:mb-7">
+      <header className="mb-5 sm:mb-7 animate-fade-in-up">
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
           Resources
         </p>
@@ -122,7 +124,7 @@ export default function ResourcesPage() {
       </header>
 
       {/* Search + filters */}
-      <section className="mb-5 sm:mb-6 space-y-3">
+      <section className="mb-5 sm:mb-6 space-y-3 animate-fade-in-up" style={{ animationDelay: "60ms" }}>
         <div className="relative">
           <IconSearch
             size={16}
@@ -170,7 +172,10 @@ export default function ResourcesPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+          <div
+            key={`${category}-${query}`}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 stagger-children"
+          >
             {filtered.map((r) => (
               <ResourceCard key={r.id} r={r} />
             ))}
@@ -179,7 +184,7 @@ export default function ResourcesPage() {
       </section>
 
       {/* FAQ */}
-      <section className="rounded-2xl border border-gray-200 bg-white shadow-md">
+      <section className="rounded-2xl border border-gray-200 bg-white shadow-md animate-fade-in-up" style={{ animationDelay: "180ms" }}>
         <header className="px-5 py-4 border-b border-gray-100">
           <h2 className="text-sm font-semibold text-gray-900">
             Frequently asked

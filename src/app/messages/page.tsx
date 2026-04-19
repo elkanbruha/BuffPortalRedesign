@@ -88,7 +88,7 @@ function MessagesInner() {
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-5 sm:py-8 max-w-[1400px] mx-auto w-full flex flex-col">
-      <header className="mb-4">
+      <header className="mb-4 animate-fade-in-up">
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
           Messages
         </p>
@@ -100,7 +100,7 @@ function MessagesInner() {
         </p>
       </header>
 
-      <div className="flex-1 flex flex-col md:flex-row gap-0 md:gap-4 min-h-[560px] rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-md">
+      <div className="flex-1 flex flex-col md:flex-row gap-0 md:gap-4 min-h-[560px] rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-md animate-fade-in-up" style={{ animationDelay: "60ms" }}>
         {/* Thread list */}
         <aside
           className={`md:w-80 md:shrink-0 flex flex-col border-r border-gray-200 ${
@@ -237,7 +237,7 @@ function MessagesInner() {
                   return (
                     <div
                       key={m.id}
-                      className={`flex ${mine ? "justify-end" : "justify-start"}`}
+                      className={`flex animate-slide-in-up ${mine ? "justify-end" : "justify-start"}`}
                     >
                       <div
                         className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${

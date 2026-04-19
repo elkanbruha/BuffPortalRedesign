@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { Avatar } from "@/components/Avatar";
+import { ProgressRing } from "@/components/ProgressRing";
 import {
   IconAlert,
   IconArrowRight,
@@ -115,7 +116,7 @@ export default function DashboardPage() {
     <div className="flex-1 flex flex-col">
       {/* Alert banner */}
       <div
-        className="px-4 sm:px-6 py-2.5 text-sm flex items-center gap-2 border-b border-gray-200"
+        className="px-4 sm:px-6 py-2.5 text-sm flex items-center gap-2 border-b border-gray-200 animate-fade-in-down"
         style={{ backgroundColor: "var(--color-gold-soft)", color: "#4b3f14" }}
       >
         <IconAlert size={16} />
@@ -134,7 +135,7 @@ export default function DashboardPage() {
 
       <div className="flex-1 px-4 sm:px-6 py-5 sm:py-8 max-w-[1400px] mx-auto w-full">
         {/* Hero row: greeting + next appointment */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 sm:mb-8">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 sm:mb-8 animate-fade-in-up">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
               {DAYS_LONG[now.getDay()]}, {MONTHS[now.getMonth()]} {now.getDate()}
@@ -150,7 +151,7 @@ export default function DashboardPage() {
           </div>
           <Link
             href="/schedule"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-black shadow-sm hover:shadow-md transition-shadow"
+            className="btn-press inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-black shadow-sm hover:shadow-md transition-shadow"
             style={{ backgroundColor: "#CBB983" }}
           >
             <IconCalendar size={18} />
@@ -161,7 +162,7 @@ export default function DashboardPage() {
         {/* Main grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           {/* LEFT: anchoring priorities, since survey says 58.3% look left first */}
-          <div className="lg:col-span-2 space-y-4 lg:space-y-6">
+          <div className="lg:col-span-2 space-y-4 lg:space-y-6 stagger-children">
             {/* Next appointment */}
             <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
               <div className="flex items-center justify-between mb-3">
@@ -232,13 +233,13 @@ export default function DashboardPage() {
                 </Link>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                <ProgressDial percent={progress} />
+                <ProgressRing percent={progress} size={112} />
                 <div className="flex-1 min-w-0 w-full">
                   <div className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">
                     {student.major} · {student.year}
                   </div>
                   <div className="space-y-2">
-                    {REQUIREMENTS.map((r) => {
+                    {REQUIREMENTS.map((r, i) => {
                       const pct = Math.min(
                         100,
                         Math.round(
@@ -258,11 +259,14 @@ export default function DashboardPage() {
                           </div>
                           <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
                             <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${pct}%`,
-                                backgroundColor: "#CBB983",
-                              }}
+                              className="h-full rounded-full animate-fill-bar"
+                              style={
+                                {
+                                  backgroundColor: "#CBB983",
+                                  ["--bar-target" as const]: `${pct}%`,
+                                  animationDelay: `${400 + i * 120}ms`,
+                                } as React.CSSProperties
+                              }
                             />
                           </div>
                         </div>
@@ -331,15 +335,15 @@ export default function DashboardPage() {
               <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2 px-1">
                 Quick actions
               </h2>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 stagger-children">
                 {QUICK_ACTIONS.map((q) => (
                   <Link
                     key={q.href}
                     href={q.href}
-                    className="group flex flex-col gap-2 p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 hover:shadow-md transition-all"
+                    className="group flex flex-col gap-2 p-4 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all"
                   >
                     <span
-                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl"
+                      className="inline-flex items-center justify-center h-9 w-9 rounded-xl transition-transform group-hover:scale-110"
                       style={{
                         backgroundColor: `${q.accent}20`,
                         color: q.accent,
@@ -360,7 +364,7 @@ export default function DashboardPage() {
           </div>
 
           {/* RIGHT: advisor + notifications */}
-          <div className="space-y-4 lg:space-y-6">
+          <div className="space-y-4 lg:space-y-6 stagger-children">
             {advisor && (
               <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
                 <div className="flex items-center justify-between mb-3">
@@ -504,39 +508,3 @@ export default function DashboardPage() {
   );
 }
 
-function ProgressDial({ percent }: { percent: number }) {
-  const clamped = Math.max(0, Math.min(100, percent));
-  const radius = 42;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference * (1 - clamped / 100);
-  return (
-    <div className="relative shrink-0" style={{ width: 112, height: 112 }}>
-      <svg width={112} height={112} viewBox="0 0 112 112">
-        <circle
-          cx={56}
-          cy={56}
-          r={radius}
-          stroke="#f3f4f6"
-          strokeWidth={10}
-          fill="none"
-        />
-        <circle
-          cx={56}
-          cy={56}
-          r={radius}
-          stroke="#CBB983"
-          strokeWidth={10}
-          strokeLinecap="round"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          transform="rotate(-90 56 56)"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-semibold text-gray-900">{clamped}%</span>
-        <span className="text-[10px] text-gray-500 font-medium">complete</span>
-      </div>
-    </div>
-  );
-}

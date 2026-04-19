@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PlanningWizardModal } from "@/components/PlanningWizardModal";
+import { ProgressRing } from "@/components/ProgressRing";
 import {
   IconArrowRight,
   IconChevronDown,
@@ -31,46 +32,6 @@ function statusLabel(s: Course["status"]) {
   return { text: "Planned", bg: "#f3f4f6", fg: "#374151" };
 }
 
-function BigProgressRing({ percent }: { percent: number }) {
-  const clamped = Math.max(0, Math.min(100, percent));
-  const size = 180;
-  const stroke = 14;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference * (1 - clamped / 100);
-  return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#f3f4f6"
-          strokeWidth={stroke}
-          fill="none"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#CBB983"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          fill="none"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-4xl font-semibold text-gray-900">{clamped}%</span>
-        <span className="text-xs text-gray-500 font-medium mt-0.5">
-          toward graduation
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function CourseRow({ c }: { c: Course }) {
   const s = statusLabel(c.status);
@@ -98,9 +59,11 @@ function CourseRow({ c }: { c: Course }) {
 function RequirementSection({
   req,
   defaultOpen,
+  index,
 }: {
   req: DegreeRequirement;
   defaultOpen: boolean;
+  index: number;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const pct = requirementPercent(req);
@@ -113,7 +76,7 @@ function RequirementSection({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full px-5 py-4 text-left flex items-center justify-between gap-3"
+        className="w-full px-5 py-4 text-left flex items-center justify-between gap-3 hover:bg-gray-50 transition-colors"
         aria-expanded={open}
       >
         <div className="flex-1 min-w-0">
@@ -128,11 +91,14 @@ function RequirementSection({
           <p className="text-xs text-gray-500 mt-0.5">{req.description}</p>
           <div className="mt-2 h-2 rounded-full bg-gray-100 overflow-hidden">
             <div
-              className="h-full rounded-full"
-              style={{
-                width: `${Math.min(pct, 100)}%`,
-                backgroundColor: "#CBB983",
-              }}
+              className="h-full rounded-full animate-fill-bar"
+              style={
+                {
+                  backgroundColor: "#CBB983",
+                  ["--bar-target" as const]: `${Math.min(pct, 100)}%`,
+                  animationDelay: `${400 + index * 120}ms`,
+                } as React.CSSProperties
+              }
             />
           </div>
           <div className="mt-1.5 flex items-center gap-3 text-[11px] text-gray-500">
@@ -159,21 +125,23 @@ function RequirementSection({
           className={`text-gray-400 transition-transform shrink-0 ${open ? "rotate-180" : ""}`}
         />
       </button>
-      {open && (
-        <div className="px-5 pb-5 pt-1">
-          {req.courses.length === 0 ? (
-            <p className="text-xs text-gray-500 italic">
-              No courses applied yet — the wizard can suggest some.
-            </p>
-          ) : (
-            <ul>
-              {req.courses.map((c) => (
-                <CourseRow key={`${c.code}-${c.term}`} c={c} />
-              ))}
-            </ul>
-          )}
+      <div className="collapse-grid" data-open={open}>
+        <div className="collapse-inner">
+          <div className="px-5 pb-5 pt-1">
+            {req.courses.length === 0 ? (
+              <p className="text-xs text-gray-500 italic">
+                No courses applied yet — the wizard can suggest some.
+              </p>
+            ) : (
+              <ul>
+                {req.courses.map((c) => (
+                  <CourseRow key={`${c.code}-${c.term}`} c={c} />
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </section>
   );
 }
@@ -185,7 +153,7 @@ function RecommendationCard({ r }: { r: Recommendation }) {
     exploratory: { bg: "#fef3c7", fg: "#92400e", label: "Exploratory" },
   }[r.fit];
   return (
-    <article className="rounded-2xl border border-gray-200 bg-white p-4 shadow-md flex flex-col">
+    <article className="rounded-2xl border border-gray-200 bg-white p-4 shadow-md flex flex-col transition-all hover:-translate-y-0.5 hover:shadow-lg">
       <div className="flex items-start gap-3">
         <div
           className="shrink-0 h-12 w-12 rounded-xl flex items-center justify-center text-sm font-bold"
@@ -248,7 +216,7 @@ export default function DegreePage() {
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-5 sm:py-8 max-w-[1400px] mx-auto w-full">
-      <header className="mb-5 sm:mb-7 flex flex-wrap items-end justify-between gap-3">
+      <header className="mb-5 sm:mb-7 flex flex-wrap items-end justify-between gap-3 animate-fade-in-up">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
             Degree
@@ -263,7 +231,7 @@ export default function DegreePage() {
         <button
           type="button"
           onClick={() => setWizardOpen(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-black shadow-sm hover:shadow-md transition-shadow"
+          className="btn-press inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-black shadow-sm hover:shadow-md transition-shadow"
           style={{ backgroundColor: "#CBB983" }}
         >
           <IconSparkle size={16} />
@@ -272,9 +240,14 @@ export default function DegreePage() {
       </header>
 
       {/* Hero: ring + stats */}
-      <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-md mb-5 sm:mb-6">
+      <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-md mb-5 sm:mb-6 animate-fade-in-up" style={{ animationDelay: "60ms" }}>
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-center lg:items-start">
-          <BigProgressRing percent={progress} />
+          <ProgressRing
+            percent={progress}
+            size={180}
+            stroke={14}
+            label="toward graduation"
+          />
           <div className="flex-1 min-w-0 w-full">
             <h2 className="text-lg font-semibold text-gray-900">
               {STUDENT.major}
@@ -282,7 +255,7 @@ export default function DegreePage() {
             <p className="text-xs text-gray-500">
               Started {STUDENT.startTerm} · Expected graduation {STUDENT.expectedGradTerm}
             </p>
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 stagger-children">
               <Stat label="Credits earned" value={`${STUDENT.totalCreditsCompleted}`} />
               <Stat label="In progress" value={`${STUDENT.totalCreditsInProgress}`} />
               <Stat label="Remaining" value={`${STUDENT.totalCreditsRequired - STUDENT.totalCreditsCompleted - STUDENT.totalCreditsInProgress}`} />
@@ -317,7 +290,7 @@ export default function DegreePage() {
       </section>
 
       {/* Recommendations */}
-      <section className="mb-5 sm:mb-7">
+      <section className="mb-5 sm:mb-7 animate-fade-in-up" style={{ animationDelay: "120ms" }}>
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-2">
             <IconSparkle size={14} />
@@ -331,7 +304,7 @@ export default function DegreePage() {
             Run the wizard →
           </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4 stagger-children">
           {RECOMMENDATIONS.map((r) => (
             <RecommendationCard key={r.id} r={r} />
           ))}
@@ -339,13 +312,13 @@ export default function DegreePage() {
       </section>
 
       {/* Requirements */}
-      <section className="space-y-3">
+      <section className="space-y-3 animate-fade-in-up" style={{ animationDelay: "180ms" }}>
         <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 flex items-center gap-2">
           <IconGraduation size={14} />
           Requirements
         </h2>
         {REQUIREMENTS.map((r, idx) => (
-          <RequirementSection key={r.id} req={r} defaultOpen={idx === 0} />
+          <RequirementSection key={r.id} req={r} defaultOpen={idx === 0} index={idx} />
         ))}
       </section>
 

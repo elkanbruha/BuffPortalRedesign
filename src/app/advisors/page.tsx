@@ -24,7 +24,7 @@ export default function AdvisorsPage() {
 
   return (
     <div className="flex-1 px-4 sm:px-6 py-5 sm:py-8 max-w-[1400px] mx-auto w-full">
-      <header className="mb-5 sm:mb-7">
+      <header className="mb-5 sm:mb-7 animate-fade-in-up">
         <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
           Advisors
         </p>
@@ -39,11 +39,12 @@ export default function AdvisorsPage() {
       {/* Current advisor banner */}
       {current && (
         <section
-          className="rounded-2xl p-4 sm:p-5 mb-5 sm:mb-7 border"
+          className="rounded-2xl p-4 sm:p-5 mb-5 sm:mb-7 border animate-fade-in-up"
           style={{
             borderColor: "rgba(203, 185, 131, 0.4)",
             background:
               "linear-gradient(135deg, rgba(203,185,131,0.18), rgba(203,185,131,0.04))",
+            animationDelay: "60ms",
           }}
         >
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -68,7 +69,7 @@ export default function AdvisorsPage() {
               <button
                 type="button"
                 onClick={() => setChangeOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-black"
+                className="btn-press inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-black"
                 style={{ backgroundColor: "#CBB983" }}
               >
                 <IconUsers size={14} />
@@ -80,13 +81,13 @@ export default function AdvisorsPage() {
       )}
 
       {/* Advisor grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5 stagger-children">
         {ADVISORS.map((a) => {
           const isYours = a.id === advisorId;
           return (
             <article
               key={a.id}
-              className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md flex flex-col"
+              className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md flex flex-col transition-all hover:-translate-y-0.5 hover:shadow-lg"
             >
               <div className="flex items-start gap-3">
                 <Avatar name={a.name} accent={a.accent} size={52} />
@@ -167,7 +168,7 @@ export default function AdvisorsPage() {
         <button
           type="button"
           onClick={() => setFaqOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-5 py-4 text-left"
+          className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition-colors"
           aria-expanded={faqOpen}
         >
           <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
@@ -179,19 +180,21 @@ export default function AdvisorsPage() {
             className={`text-gray-400 transition-transform ${faqOpen ? "rotate-180" : ""}`}
           />
         </button>
-        {faqOpen && (
-          <div className="px-5 pb-5 text-sm text-gray-600 leading-relaxed space-y-2 border-t border-gray-100 pt-4">
-            <p>
-              CU lets you change academic advisors as often as you need to. It&apos;s common to switch when your interests shift — for example, a student who starts in the systems track but later pivots toward ML is often better served by an advisor who specializes in that area.
-            </p>
-            <p>
-              Changing advisors does not reset any of your degree progress, appointment history, or notes. Your new advisor inherits your audit.
-            </p>
-            <p>
-              If you&apos;re not sure whether to switch, try dropping in on General Advising on a weekend — it&apos;s an informal way to get a second perspective.
-            </p>
+        <div className="collapse-grid" data-open={faqOpen}>
+          <div className="collapse-inner">
+            <div className="px-5 pb-5 text-sm text-gray-600 leading-relaxed space-y-2 border-t border-gray-100 pt-4">
+              <p>
+                CU lets you change academic advisors as often as you need to. It&apos;s common to switch when your interests shift — for example, a student who starts in the systems track but later pivots toward ML is often better served by an advisor who specializes in that area.
+              </p>
+              <p>
+                Changing advisors does not reset any of your degree progress, appointment history, or notes. Your new advisor inherits your audit.
+              </p>
+              <p>
+                If you&apos;re not sure whether to switch, try dropping in on General Advising on a weekend — it&apos;s an informal way to get a second perspective.
+              </p>
+            </div>
           </div>
-        )}
+        </div>
       </section>
 
       {changeOpen && (

@@ -52,7 +52,7 @@ export function ChangeAdvisorModal({ onClose }: Props) {
         className="absolute inset-0 bg-black/40 animate-fade-in-up"
         onClick={onClose}
       />
-      <div className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl animate-fade-in-up overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl animate-scale-in overflow-hidden flex flex-col max-h-[90vh]">
         <header className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <div className="flex items-start gap-2">
             <IconUsers size={18} className="text-gray-500 mt-0.5" />
@@ -174,7 +174,7 @@ export function ChangeAdvisorModal({ onClose }: Props) {
               type="button"
               disabled={!selected}
               onClick={confirm}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-black disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-press inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-black disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: "#CBB983" }}
             >
               <IconCheck size={16} />

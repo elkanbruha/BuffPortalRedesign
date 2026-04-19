@@ -50,7 +50,7 @@ export function BookingModal() {
         onClick={() => setBookingDraft(null)}
       />
       <div
-        className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl animate-fade-in-up overflow-hidden"
+        className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-xl animate-scale-in overflow-hidden"
       >
         <header
           className="px-5 py-4 border-b border-gray-100 flex items-start gap-3"
@@ -144,7 +144,7 @@ export function BookingModal() {
             type="button"
             onClick={confirm}
             disabled={confirming}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-black transition-opacity disabled:opacity-60"
+            className="btn-press inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-black transition-opacity disabled:opacity-60"
             style={{ backgroundColor: "#CBB983" }}
           >
             <IconCheck size={16} />

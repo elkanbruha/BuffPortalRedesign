@@ -116,7 +116,7 @@ export function PlanningWizardModal({ onClose }: Props) {
         className="absolute inset-0 bg-black/40 animate-fade-in-up"
         onClick={onClose}
       />
-      <div className="relative w-full sm:max-w-xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl animate-fade-in-up overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="relative w-full sm:max-w-xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl animate-scale-in overflow-hidden flex flex-col max-h-[92vh]">
         <header className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <div className="flex items-start gap-2">
             <IconSparkle size={18} style={{ color: "#8a7a44" }} />
@@ -154,7 +154,7 @@ export function PlanningWizardModal({ onClose }: Props) {
 
         <div className="px-5 py-5 overflow-y-auto subtle-scroll flex-1">
           {step === 0 && (
-            <section>
+            <section className="animate-fade-in-up">
               <h3 className="text-sm font-semibold text-gray-900 mb-1">
                 What&apos;s your main goal for next semester?
               </h3>
@@ -194,7 +194,7 @@ export function PlanningWizardModal({ onClose }: Props) {
           )}
 
           {step === 1 && (
-            <section>
+            <section className="animate-fade-in-up">
               <h3 className="text-sm font-semibold text-gray-900 mb-1">
                 How heavy a course load?
               </h3>
@@ -234,7 +234,7 @@ export function PlanningWizardModal({ onClose }: Props) {
           )}
 
           {step === 2 && (
-            <section>
+            <section className="animate-fade-in-up">
               <h3 className="text-sm font-semibold text-gray-900 mb-1">
                 Any constraints?
               </h3>
@@ -278,14 +278,14 @@ export function PlanningWizardModal({ onClose }: Props) {
           )}
 
           {step === 3 && (
-            <section>
+            <section className="animate-fade-in-up">
               <h3 className="text-sm font-semibold text-gray-900 mb-1">
                 Your draft plan
               </h3>
               <p className="text-xs text-gray-500 mb-4">
                 Based on your goal and constraints. Bring this to your next advising meeting.
               </p>
-              <ul className="space-y-2">
+              <ul className="space-y-2 stagger-children">
                 {plan.slice(0, 5).map((r) => (
                   <li
                     key={r.id}

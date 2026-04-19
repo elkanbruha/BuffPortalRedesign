@@ -32,7 +32,7 @@ export default function SchedulePage() {
 
   return (
     <div className="flex flex-col lg:flex-row flex-1 p-4 lg:p-6 gap-4 lg:gap-6">
-      <aside className="w-full lg:w-80 shrink-0 space-y-4">
+      <aside className="w-full lg:w-80 shrink-0 space-y-4 stagger-children">
         <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-md">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -168,7 +168,9 @@ export default function SchedulePage() {
         )}
       </aside>
 
-      <WeekCalendar />
+      <div className="flex-1 min-w-0 flex flex-col animate-fade-in-up" style={{ animationDelay: "120ms" }}>
+        <WeekCalendar />
+      </div>
     </div>
   );
 }
