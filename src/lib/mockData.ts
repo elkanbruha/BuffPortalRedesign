@@ -509,14 +509,14 @@ export const SEED_THREADS: Thread[] = [
         id: "msg-1-1",
         from: "student",
         body:
-          "Hi Dr. Martinez — I'd like to do both CSCI 4622 and 4239 next semester. Is that reasonable given I'm also taking 4448 right now?",
+          "Hi Dr. Martinez, I'd like to do both CSCI 4622 and 4239 next semester. Is that reasonable given I'm also taking 4448 right now?",
         timestamp: "2026-04-16T14:22:00",
       },
       {
         id: "msg-1-2",
         from: "advisor",
         body:
-          "Short answer: yes, it's doable — but I'd want to make sure you're not also planning a 3000-level math alongside. Want to look at the full plan together?",
+          "Short answer: yes, it's doable, but I'd want to make sure you're not also planning a 3000-level math alongside. Want to look at the full plan together?",
         timestamp: "2026-04-17T09:05:00",
       },
       {
@@ -529,7 +529,7 @@ export const SEED_THREADS: Thread[] = [
         id: "msg-1-4",
         from: "advisor",
         body:
-          "Happy to talk through ML electives — let's pin this down before registration opens. I have Tuesday 2–4 open.",
+          "Happy to talk through ML electives, let's pin this down before registration opens. I have Tuesday 2–4 open.",
         timestamp: "2026-04-18T16:40:00",
       },
     ],
@@ -544,7 +544,7 @@ export const SEED_THREADS: Thread[] = [
         id: "msg-2-1",
         from: "student",
         body:
-          "Hi Sarah — I took a linear algebra class at a community college last summer. Can it replace APPM 3310?",
+          "Hi Sarah, I took a linear algebra class at a community college last summer. Can it replace APPM 3310?",
         timestamp: "2026-02-10T11:00:00",
       },
       {
@@ -558,7 +558,7 @@ export const SEED_THREADS: Thread[] = [
         id: "msg-2-3",
         from: "advisor",
         body:
-          "Update — it came back as equivalent. I've marked APPM 3310 satisfied in your audit.",
+          "Update: it came back as equivalent. I've marked APPM 3310 satisfied in your audit.",
         timestamp: "2026-02-12T09:10:00",
       },
     ],
@@ -573,7 +573,7 @@ export const SEED_THREADS: Thread[] = [
         id: "msg-3-1",
         from: "student",
         body:
-          "Quick question — can I swap HIST 1011 for a different history course retroactively?",
+          "Quick question, can I swap HIST 1011 for a different history course retroactively?",
         timestamp: "2025-11-02T19:14:00",
       },
       {
