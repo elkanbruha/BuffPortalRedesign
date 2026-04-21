@@ -60,18 +60,15 @@ export function Navbar() {
     <header className="sticky top-0 z-40 bg-black border-b border-gray-800 shadow-sm">
       <nav className="flex items-center justify-between px-4 sm:px-6 h-14 sm:h-16">
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center">
             <Image
-              src="/buffalo-logo.png"
-              alt="CU Buffs Logo"
-              width={36}
-              height={36}
-              className="h-8 w-8 sm:h-9 sm:w-9 object-contain"
+              src="/BuffPortalAdvising.png"
+              alt="Buff Portal Advising"
+              width={500}
+              height={121}
+              className="h-8 sm:h-9 w-auto object-contain"
               priority
             />
-            <span className="text-sm sm:text-base font-semibold text-white tracking-tight">
-              CU Buffs Advising
-            </span>
           </Link>
         </div>
 
