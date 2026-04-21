@@ -66,7 +66,7 @@ export function Navbar() {
               alt="Buff Portal Advising"
               width={500}
               height={121}
-              className="h-12 sm:h-14 w-auto object-contain"
+              className="h-[50px] sm:h-[58px] w-auto object-contain"
               priority
             />
           </Link>
