@@ -219,6 +219,7 @@ export const AVAILABILITY: AvailabilitySlot[] = [
   { id: "slot-3", advisorId: "adv-martinez", day: 3, startHour: 8, endHour: 10, type: "in-person" },
   { id: "slot-4", advisorId: "adv-martinez", day: 4, startHour: 13, endHour: 14, type: "in-person" },
   { id: "slot-5", advisorId: "adv-martinez", day: 5, startHour: 14, endHour: 16, type: "virtual" },
+  { id: "slot-14", advisorId: "adv-martinez", day: 3, startHour: 13, endHour: 14, type: "virtual" },
   // Sarah Kim
   { id: "slot-6", advisorId: "adv-kim", day: 2, startHour: 10, endHour: 12, type: "virtual" },
   { id: "slot-7", advisorId: "adv-kim", day: 3, startHour: 11, endHour: 12, type: "virtual" },
